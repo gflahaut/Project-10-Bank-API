@@ -1,0 +1,25 @@
+.mainNav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 20px;
+}
+
+.mainNavLogo {
+    display: flex;
+    align-items: center;
+}
+
+.mainNavLogoImage {
+    max-width: 100%;
+    width: 200px;
+}
+
+.mainNavItem {
+    text-decoration: none;
+    margin-right: 0.5rem;
+}
+
+.mainNavItem:hover {
+    text-decoration: underline;
+}
