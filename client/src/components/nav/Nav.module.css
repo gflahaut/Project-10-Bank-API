@@ -23,3 +23,20 @@
 .mainNavItem:hover {
     text-decoration: underline;
 }
+
+.spanUser{
+    padding-right: 1em;
+}
+
+i{
+    padding-right: 0.25em;
+}
+
+@media (max-width: 420px) {
+    .mainNavItem {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        font-size: small;
+    }
+}
