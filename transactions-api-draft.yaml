@@ -1,0 +1,247 @@
+openapi: 3.0.3
+info:
+  title: Transactions API Draft
+  description: API for managing transactions, including listing, adding, updating, and deleting transactions.
+  version: 1.0.0
+paths:
+  /transactions:
+    get:
+      summary: Retrieve paginated user transaction records with optional grouping functionality.
+      description: Retrieve a list of transactions from a user, optionally grouped by date range, price range, transaction type, description, or category.
+      parameters:
+        - name: accountId
+          in: query
+          description: Account ID for which the transactions are to be fetched.
+          required: true
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          description: The start date (YYYY-MM-DD) for filtering transactions (inclusive).
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: The end date (YYYY-MM-DD) for filtering transactions (inclusive).
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: minAmount
+          in: query
+          description: Minimum transaction amount for filtering results.
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: maxAmount
+          in: query
+          description: Maximum transaction amount for filtering results.
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: transactionType
+          in: query
+          description: Type of transaction to filter (e.g., 'credit', 'debit').
+          required: false
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: Category of the transaction (e.g., 'groceries', 'rent').
+          required: false
+          schema:
+            type: string
+        - name: description
+          in: query
+          description: Description or keywords to filter transactions.
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for paginated results.
+          required: true
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          description: Number of transactions per page.
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successful response with a list of transactions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Transaction"
+                  total:
+                    type: integer
+                    description: Total number of transactions.
+        "400":
+          description: Invalid request parameters.
+        "500":
+          description: Internal server error.
+
+    post:
+      summary: Add a new transaction
+      description: Create a new transaction with the specified details.
+      parameters:
+        - name: accountId
+          in: query
+          description: Account ID for which the transaction is to be added.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Transaction details to add.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionDetails"
+      responses:
+        "201":
+          description: Transaction created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionDetails"
+        "400":
+          description: Invalid input data.
+        "500":
+          description: Internal server error.
+
+  /transactions/{transactionId}:
+    get:
+      summary: Get transaction details
+      description: Retrieve details of a specific transaction.
+      parameters:
+        - name: accountId
+          in: query
+          description: Account ID for which the transaction is to be fetched (used to verify access rights).
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: path
+          description: ID of the transaction to retrieve.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response with transaction details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionDetails"
+        "404":
+          description: Transaction not found.
+        "500":
+          description: Internal server error.
+
+    put:
+      summary: Update a transaction
+      description: Update the details of an existing transaction.
+      parameters:
+        - name: accountId
+          in: query
+          description: Account ID for which the transaction is to be fetched (used to verify access rights).
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: path
+          description: ID of the transaction to update.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Transaction details to update.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionDetails"
+      responses:
+        "200":
+          description: Transaction updated successfully.
+        "400":
+          description: Invalid input data.
+        "404":
+          description: Transaction not found.
+        "500":
+          description: Internal server error.
+
+    delete:
+      summary: Delete a transaction
+      description: Remove a transaction by its ID.
+      parameters:
+        - name: accountId
+          in: query
+          description: Account ID for which the transaction is to be deleted (used to verify access rights).
+          required: true
+          schema:
+            type: string
+        - name: transactionId
+          in: path
+          description: ID of the transaction to delete.
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Transaction deleted successfully.
+        "404":
+          description: Transaction not found.
+        "500":
+          description: Internal server error.
+
+components:
+  schemas:
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the transaction.
+        accountId:
+          type: string
+          description: Identifier for the associated account.
+        date:
+          type: string
+          format: date
+          description: Date of the transaction.
+        amount:
+          type: number
+          format: float
+          description: Amount of the transaction.
+        description:
+          type: string
+          description: Brief description of the transaction.
+        category:
+          type: string
+          description: Category of the transaction, such as 'groceries', 'rent', etc.
+        type:
+          type: string
+          description: Transaction type, such as 'credit' or 'debit'.
+
+    TransactionDetails:
+      allOf:
+        - $ref: "#/components/schemas/Transaction"
+        - type: object
+          properties:
+            notes:
+              type: string
+              description: Additional notes about the transaction.
