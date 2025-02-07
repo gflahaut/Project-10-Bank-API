@@ -78,7 +78,7 @@ export const updateUser = createAsyncThunk('user/update', async ({ firstName, la
 const userSlice = createSlice({
     name: 'user',
     initialState: {
-        user: JSON.parse(sessionStorage.getItem('user')) || {
+        user: JSON.parse(localStorage.getItem('user')) || JSON.parse(sessionStorage.getItem('user')) || {
             token: null,
             infos: null
         },
@@ -90,6 +90,7 @@ const userSlice = createSlice({
             state.user.token = null;
             state.user.infos = null;
             sessionStorage.removeItem('user');
+            localStorage.removeItem('user');
         },
     },
     extraReducers: (builder) => {
@@ -101,7 +102,6 @@ const userSlice = createSlice({
             .addCase(login.fulfilled, (state, action) => {
                 state.loading = false;
                 state.user = action.payload;
-                sessionStorage.setItem('user', JSON.stringify(state.user));
             })
             .addCase(login.rejected, (state, action) => {
                 state.loading = false;
@@ -114,7 +114,16 @@ const userSlice = createSlice({
             .addCase(updateUser.fulfilled, (state, action) => {
                 state.loading = false;
                 state.user.infos = action.payload;
-                sessionStorage.setItem('user', JSON.stringify(state.user));
+                const storedUserLocal = JSON.parse(localStorage.getItem('user'));
+                const storedUserSession = JSON.parse(sessionStorage.getItem('user'));
+                if (storedUserLocal) {
+                    storedUserLocal.infos = action.payload;
+                    localStorage.setItem('user', JSON.stringify(storedUserLocal));
+                }
+                if (storedUserSession) {
+                    storedUserSession.infos = action.payload;
+                    sessionStorage.setItem('user', JSON.stringify(storedUserSession));
+                }
             })
             .addCase(updateUser.rejected, (state, action) => {
                 state.loading = false;

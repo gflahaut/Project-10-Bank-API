@@ -10,17 +10,27 @@ import Loader from "../../components/loader/Loader";
 const SignIn = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error, user } = useSelector((state) => state.user);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(login({ username, password }));
+    const isRemembered = rememberMe;
+    dispatch(login({ username, password })).then((result) => {
+      if (result.payload?.token) {
+        if (isRemembered) {
+          localStorage.setItem("user", JSON.stringify(result.payload));
+        } else {
+          sessionStorage.setItem("user", JSON.stringify(result.payload));
+        }
+      }
+    });
   };
 
   useEffect(() => {
-    if (user?.token) {
+    if (JSON.parse(localStorage.getItem('user'))?.token || user?.token) {
       navigate("/profile");
     }
   }, [user, navigate]);
@@ -56,7 +66,12 @@ const SignIn = () => {
               />
             </div>
             <div className={styles.inputRemember}>
-              <input type="checkbox" id="remember-me" />
+              <input
+                type="checkbox"
+                id="remember-me"
+                checked={rememberMe}
+                onChange={() => setRememberMe(!rememberMe)}
+              />
               <label htmlFor="remember-me">Remember me</label>
             </div>
             <button type="submit" className={styles.signInButton} disabled={loading}>
