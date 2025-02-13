@@ -4,9 +4,11 @@ import Nav from "../../components/nav/Nav";
 import Footer from "../../components/footer/Footer";
 import { useDispatch, useSelector } from "react-redux";
 import { updateUser } from "../../stores/slices/user.slice";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user, loading, error } = useSelector((state) => state.user);
 
   const accounts = [
@@ -34,6 +36,14 @@ const Profile = () => {
   const [tempFirstName, setTempFirstName] = useState("");
   const [tempLastName, setTempLastName] = useState("");
 
+  // Ensure that navigation happens after the component mounts
+  useEffect(() => {
+    if (loading) return;
+    if (!user || !user.infos) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
+
   useEffect(() => {
     if (user && user.infos) {
       setTempFirstName(user.infos.firstName);
@@ -42,7 +52,7 @@ const Profile = () => {
   }, [user]);
 
   const handleEditClick = () => {
-    setTempFirstName(user.infos.firstName); // Ensure temp values are set to the current Redux state
+    setTempFirstName(user.infos.firstName);
     setTempLastName(user.infos.lastName);
     setIsEditing(true);
   };
@@ -59,12 +69,12 @@ const Profile = () => {
   };
 
   const handleCancelClick = () => {
-    setTempFirstName(user.infos.firstName); // Reset to current values in Redux
+    setTempFirstName(user.infos.firstName);
     setTempLastName(user.infos.lastName);
     setIsEditing(false);
   };
 
-  if (loading || !user || !user.infos) return <p>Loading...</p>;
+  if (loading || !user || !user.infos) return "<p>Loading...</p>"; 
 
   return (
     <>
@@ -104,9 +114,7 @@ const Profile = () => {
           ) : (
             <>
               <h1>
-                {" "}
-                Welcome back <br /> {user.infos.firstName} {user.infos.lastName}{" "}
-                !
+                Welcome back <br /> {user.infos.firstName} {user.infos.lastName} !
               </h1>
               <button onClick={handleEditClick} className={styles.editButton}>
                 Edit Name

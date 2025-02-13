@@ -37,7 +37,7 @@ const Nav = () => {
           </div>
         ) : (
           <div className={styles.mainNavItem}>
-            <Link to="/sign-in">
+            <Link to="/login">
               <i className="fa fa-user-circle" />
               Sign In
             </Link>
