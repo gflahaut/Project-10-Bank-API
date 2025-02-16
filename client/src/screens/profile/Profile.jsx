@@ -35,8 +35,7 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempFirstName, setTempFirstName] = useState("");
   const [tempLastName, setTempLastName] = useState("");
-
-  // Ensure that navigation happens after the component mounts
+ 
   useEffect(() => {
     if (loading) return;
     if (!user || !user.infos) {
