@@ -14,7 +14,7 @@ paths:
       tags:
         - User Module
       summary: Login
-      description: API for Login
+      description: API for user authentication
       parameters:
         - in: body
           name: body
@@ -26,19 +26,44 @@ paths:
         - application/json
       responses:
         '200':
-          description: Login Successfully
+          description: Login successful
           schema:
             $ref: '#/definitions/LoginResponse'
         '400':
-          description: Invalid Fields
+          description: Invalid fields
         '500':
-          description: Internal Server Error
+          description: Internal server error
+
+  /user/logout:
+    post:
+      security:
+        - Bearer: []
+      tags:
+        - User Module
+      summary: Logout
+      description: API to log out the user
+      parameters:
+        - in: header
+          name: Authorization
+          type: string
+          description: Bearer JWT token
+          required: true
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: Successfully logged out
+          schema:
+            $ref: '#/definitions/ApiResponse'
+        '401':
+          description: Unauthorized - Invalid token
+
   /user/signup:
     post:
       tags:
         - User Module
       summary: Signup
-      description: API for Signup
+      description: API for user registration
       parameters:
         - in: body
           name: body
@@ -50,48 +75,54 @@ paths:
         - application/json
       responses:
         '200':
-          description: Signup Successfully
+          description: Signup successful
           schema:
             $ref: '#/definitions/ApiResponse'
         '400':
-          description: Invalid Fields
+          description: Invalid fields
         '500':
-          description: Internal Server Error
+          description: Internal server error
+
   /user/profile:
     post:
       security:
         - Bearer: []
       tags:
         - User Module
-      summary: User Profile API
-      description: API for fetching a user profile
+      summary: Get User Profile
+      description: API to fetch user profile (authentication required)
       parameters:
         - in: header
           name: Authorization
-          description: Attach Bearer JWT token
+          type: string
+          description: Bearer JWT token
           required: true
       produces:
         - application/json
       responses:
         '200':
-          description: User profile retrieved successully
+          description: User profile retrieved successfully
           schema:
             $ref: '#/definitions/ApiResponse'
         '400':
-          description: Invalid Fields
+          description: Invalid fields
+        '401':
+          description: Unauthorized - User must be logged in
         '500':
-          description: Internal Server Error
+          description: Internal server error
+
     put:
       security:
         - Bearer: []
       tags:
         - User Module
-      summary: User Profile API
-      description: API for updating a user profile
+      summary: Update User Profile
+      description: API to update user profile information
       parameters:
         - in: header
           name: Authorization
-          description: Attach Bearer JWT token
+          type: string
+          description: Bearer JWT token
           required: true
         - in: body
           name: body
@@ -103,41 +134,49 @@ paths:
         - application/json
       responses:
         '200':
-          description: User profile retrieved successully
+          description: User profile updated successfully
           schema:
             $ref: '#/definitions/ApiResponse'
         '400':
-          description: Invalid Fields
+          description: Invalid fields
+        '401':
+          description: Unauthorized - User must be logged in
         '500':
-          description: Internal Server Error
+          description: Internal server error
+
 securityDefinitions:
   Bearer:
     type: apiKey
     name: Authorization
     in: header
+
 definitions:
   User:
+    type: object
     properties:
       email:
         type: string
-        description: user email
+        description: User email
       password:
         type: string
-        description: user password
+        description: User password
       firstName:
         type: string
-        description: user first name
+        description: User first name
       lastName:
         type: string
-        description: user last name
+        description: User last name
+
   Login:
+    type: object
     properties:
       email:
         type: string
-        description: user email
+        description: User email
       password:
         type: string
-        description: user password
+        description: User password
+
   ApiResponse:
     type: object
     properties:
@@ -152,11 +191,13 @@ definitions:
             type: string
           email:
             type: string
+
   LoginResponse:
     type: object
     properties:
       token:
         type: string
+
   UserProfile:
     type: object
     properties:
