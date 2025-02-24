@@ -21,16 +21,16 @@ const SignIn = () => {
     dispatch(login({ username, password })).then((result) => {
       if (result.payload?.token) {
         if (isRemembered) {
-          localStorage.setItem("user", JSON.stringify(result.payload));
+          localStorage.setItem("token", result.payload.token);
         } else {
-          sessionStorage.setItem("user", JSON.stringify(result.payload));
+          sessionStorage.setItem("token", result.payload.token);
         }
       }
     });
   };
 
   useEffect(() => {
-    if (JSON.parse(localStorage.getItem('user'))?.token || user?.token) {
+    if (localStorage.getItem('token') || user?.token) {
       navigate("/profile");
     }
   }, [user, navigate]);

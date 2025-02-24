@@ -1,81 +1,70 @@
-openapi: 3.0.3
+openapi: 3.0.0
 info:
-  title: Transactions API Draft
-  description: API for managing transactions, including listing, adding, updating, and deleting transactions.
+  title: Argent Bank Transactions API
+  description: API pour la gestion des comptes et transactions bancaires.
   version: 1.0.0
+servers:
+  - url: https://api.argentbank.com
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    adminAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Token d’authentification administrateur"
+
+security:
+  - bearerAuth: []  # Authentification par défaut pour les utilisateurs
+
 paths:
-  /transactions:
+  /accounts/{accountId}:
+    parameters:
+      - name: accountId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: ID unique du compte client
+
     get:
-      summary: Retrieve paginated user transaction records with optional grouping functionality.
-      description: Retrieve a list of transactions from a user, optionally grouped by date range, price range, transaction type, description, or category.
-      parameters:
-        - name: accountId
-          in: query
-          description: Account ID for which the transactions are to be fetched.
-          required: true
-          schema:
-            type: string
-        - name: startDate
-          in: query
-          description: The start date (YYYY-MM-DD) for filtering transactions (inclusive).
-          required: false
-          schema:
-            type: string
-            format: date
-        - name: endDate
-          in: query
-          description: The end date (YYYY-MM-DD) for filtering transactions (inclusive).
-          required: false
-          schema:
-            type: string
-            format: date
-        - name: minAmount
-          in: query
-          description: Minimum transaction amount for filtering results.
-          required: false
-          schema:
-            type: number
-            format: float
-        - name: maxAmount
-          in: query
-          description: Maximum transaction amount for filtering results.
-          required: false
-          schema:
-            type: number
-            format: float
-        - name: transactionType
-          in: query
-          description: Type of transaction to filter (e.g., 'credit', 'debit').
-          required: false
-          schema:
-            type: string
-        - name: category
-          in: query
-          description: Category of the transaction (e.g., 'groceries', 'rent').
-          required: false
-          schema:
-            type: string
-        - name: description
-          in: query
-          description: Description or keywords to filter transactions.
-          required: false
-          schema:
-            type: string
-        - name: page
-          in: query
-          description: Page number for paginated results.
-          required: true
-          schema:
-            type: integer
-        - name: pageSize
-          in: query
-          description: Number of transactions per page.
-          required: true
-          schema:
-            type: integer
+      summary: Récupérer les informations d'un compte client
+      security:
+        - bearerAuth: []
       responses:
         "200":
-          description: Successful response with a list of transactions.
+          description: Détails du compte client
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accountId:
+                    type: string
+                    example: "123456789"
+                  balance:
+                    type: number
+                    example: 5000.75
+                  availableBalance:
+                    type: number
+                    example: 4800.50
+        "401":
+          description: Non autorisé
+        "404":
+          description: Compte non trouvé
+
+  /transactions:
+    get:
+      summary: Récupérer les transactions du mois en cours
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Liste des transactions du mois en cours
           content:
             application/json:
               schema:
@@ -84,164 +73,171 @@ paths:
                   transactions:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Transaction"
-                  total:
-                    type: integer
-                    description: Total number of transactions.
-        "400":
-          description: Invalid request parameters.
-        "500":
-          description: Internal server error.
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "txn_001"
+                        date:
+                          type: string
+                          format: date-time
+                          example: "2025-02-01T14:30:00Z"
+                        description:
+                          type: string
+                          example: "Achat en ligne"
+                        amount:
+                          type: number
+                          example: -50.00
+                        balance:
+                          type: number
+                          example: 4950.75
+                        transactionType:
+                          type: string
+                          example: "Electronic"
+                        category:
+                          type: string
+                          example: "Food"
+                        note:
+                          type: string
+                          example: "Déjeuner avec des collègues"
+        "401":
+          description: Non autorisé
 
     post:
-      summary: Add a new transaction
-      description: Create a new transaction with the specified details.
-      parameters:
-        - name: accountId
-          in: query
-          description: Account ID for which the transaction is to be added.
-          required: true
-          schema:
-            type: string
+      summary: Ajouter une nouvelle transaction
+      security:
+        - bearerAuth: []
       requestBody:
-        description: Transaction details to add.
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TransactionDetails"
+              type: object
+              properties:
+                amount:
+                  type: number
+                  example: 100.50
+                description:
+                  type: string
+                  example: "Achat en ligne"
+                transactionType:
+                  type: string
+                  example: "Electronic"
+                category:
+                  type: string
+                  example: "Shopping"
+                note:
+                  type: string
+                  example: "Achat de vêtements"
       responses:
         "201":
-          description: Transaction created successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TransactionDetails"
+          description: Transaction ajoutée avec succès
         "400":
-          description: Invalid input data.
-        "500":
-          description: Internal server error.
+          description: Erreur de validation
+        "401":
+          description: Non autorisé
 
-  /transactions/{transactionId}:
+  /transactions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: ID unique de la transaction
+
     get:
-      summary: Get transaction details
-      description: Retrieve details of a specific transaction.
-      parameters:
-        - name: accountId
-          in: query
-          description: Account ID for which the transaction is to be fetched (used to verify access rights).
-          required: true
-          schema:
-            type: string
-        - name: transactionId
-          in: path
-          description: ID of the transaction to retrieve.
-          required: true
-          schema:
-            type: string
+      summary: Récupérer les détails d'une transaction
+      security:
+        - bearerAuth: []
       responses:
         "200":
-          description: Successful response with transaction details.
+          description: Détails de la transaction
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TransactionDetails"
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "txn_001"
+                  date:
+                    type: string
+                    format: date-time
+                    example: "2025-02-01T14:30:00Z"
+                  description:
+                    type: string
+                    example: "Achat en ligne"
+                  amount:
+                    type: number
+                    example: -50.00
+                  balance:
+                    type: number
+                    example: 4950.75
+                  transactionType:
+                    type: string
+                    example: "Electronic"
+                  category:
+                    type: string
+                    example: "Food"
+                  note:
+                    type: string
+                    example: "Déjeuner avec des collègues"
+        "401":
+          description: Non autorisé
         "404":
-          description: Transaction not found.
-        "500":
-          description: Internal server error.
+          description: Transaction non trouvée
 
-    put:
-      summary: Update a transaction
-      description: Update the details of an existing transaction.
-      parameters:
-        - name: accountId
-          in: query
-          description: Account ID for which the transaction is to be fetched (used to verify access rights).
-          required: true
-          schema:
-            type: string
-        - name: transactionId
-          in: path
-          description: ID of the transaction to update.
-          required: true
-          schema:
-            type: string
+    patch:
+      summary: Modifier partiellement une transaction (seuls `category` et `note` peuvent être modifiés)
+      security:
+        - bearerAuth: []
       requestBody:
-        description: Transaction details to update.
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TransactionDetails"
+              type: object
+              properties:
+                category:
+                  type: string
+                  example: "Transport"
+                note:
+                  type: string
+                  example: "Trajet en taxi"
       responses:
         "200":
-          description: Transaction updated successfully.
+          description: Transaction mise à jour avec succès
         "400":
-          description: Invalid input data.
+          description: Erreur de validation
+        "401":
+          description: Non autorisé
         "404":
-          description: Transaction not found.
-        "500":
-          description: Internal server error.
+          description: Transaction non trouvée
+
+  /admin/transactions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: ID unique de la transaction
 
     delete:
-      summary: Delete a transaction
-      description: Remove a transaction by its ID.
-      parameters:
-        - name: accountId
-          in: query
-          description: Account ID for which the transaction is to be deleted (used to verify access rights).
-          required: true
-          schema:
-            type: string
-        - name: transactionId
-          in: path
-          description: ID of the transaction to delete.
-          required: true
-          schema:
-            type: string
+      summary: Supprimer une transaction (Réservé aux administrateurs)
+      security:
+        - adminAuth: []
       responses:
         "204":
-          description: Transaction deleted successfully.
+          description: Transaction supprimée avec succès
+        "401":
+          description: Non autorisé
+        "403":
+          description: Accès interdit (l'utilisateur n'est pas administrateur)
         "404":
-          description: Transaction not found.
-        "500":
-          description: Internal server error.
+          description: Transaction non trouvée
 
-components:
-  schemas:
-    Transaction:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Unique identifier for the transaction.
-        accountId:
-          type: string
-          description: Identifier for the associated account.
-        date:
-          type: string
-          format: date
-          description: Date of the transaction.
-        amount:
-          type: number
-          format: float
-          description: Amount of the transaction.
-        description:
-          type: string
-          description: Brief description of the transaction.
-        category:
-          type: string
-          description: Category of the transaction, such as 'groceries', 'rent', etc.
-        type:
-          type: string
-          description: Transaction type, such as 'credit' or 'debit'.
 
-    TransactionDetails:
-      allOf:
-        - $ref: "#/components/schemas/Transaction"
-        - type: object
-          properties:
-            notes:
-              type: string
-              description: Additional notes about the transaction.
+
+

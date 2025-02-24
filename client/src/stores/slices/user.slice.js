@@ -25,9 +25,16 @@ const loginApi = async ({ username, password }) => {
     });
 
     const token = tokenRequest.body?.token;
+
     if (!token) {
         throw new Error('Token is missing in the response');
     }
+    const infos = await fetchProfileApi(token);
+
+    return { token, infos };
+};
+
+export const fetchProfileApi = async (token) => {
 
     const userInfosRequest = await apiRequest(endpoints.profile, {
         method: 'POST',
@@ -40,9 +47,8 @@ const loginApi = async ({ username, password }) => {
     if (!infos) {
         throw new Error('user infos are missing in the response');
     }
-
-    return { token, infos };
-};
+    return infos;
+}
 
 const updateUserApi = async ({ firstName, lastName, token }) => {
     const response = await apiRequest(endpoints.profile, {
@@ -65,6 +71,14 @@ export const login = createAsyncThunk('user/login', async (credentials, thunkAPI
     }
 });
 
+export const fetchProfile = createAsyncThunk('user/profile', async (token, thunkAPI) => {
+    try {
+        return await fetchProfileApi(token);
+    } catch (error) {
+        return thunkAPI.rejectWithValue(error.message || 'Unexpected error occurred');
+    }
+});
+
 export const updateUser = createAsyncThunk('user/update', async ({ firstName, lastName }, { getState, rejectWithValue }) => {
     try {
         const token = getState().user.user.token;
@@ -78,7 +92,7 @@ export const updateUser = createAsyncThunk('user/update', async ({ firstName, la
 const userSlice = createSlice({
     name: 'user',
     initialState: {
-        user: JSON.parse(localStorage.getItem('user')) || JSON.parse(sessionStorage.getItem('user')) || {
+        user: {
             token: null,
             infos: null
         },
@@ -89,8 +103,8 @@ const userSlice = createSlice({
         logout(state) {
             state.user.token = null;
             state.user.infos = null;
-            sessionStorage.removeItem('user');
-            localStorage.removeItem('user');
+            sessionStorage.removeItem('token');
+            localStorage.removeItem('token');
         },
     },
     extraReducers: (builder) => {
@@ -107,6 +121,18 @@ const userSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
             })
+            .addCase(fetchProfile.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchProfile.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user.infos = action.payload;
+            })
+            .addCase(fetchProfile.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
             .addCase(updateUser.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -114,16 +140,6 @@ const userSlice = createSlice({
             .addCase(updateUser.fulfilled, (state, action) => {
                 state.loading = false;
                 state.user.infos = action.payload;
-                const storedUserLocal = JSON.parse(localStorage.getItem('user'));
-                const storedUserSession = JSON.parse(sessionStorage.getItem('user'));
-                if (storedUserLocal) {
-                    storedUserLocal.infos = action.payload;
-                    localStorage.setItem('user', JSON.stringify(storedUserLocal));
-                }
-                if (storedUserSession) {
-                    storedUserSession.infos = action.payload;
-                    sessionStorage.setItem('user', JSON.stringify(storedUserSession));
-                }
             })
             .addCase(updateUser.rejected, (state, action) => {
                 state.loading = false;
