@@ -45,7 +45,10 @@ paths:
                 properties:
                   accountId:
                     type: string
-                    example: "123456789"
+                    example: "acc_1r3k7"
+                  accountName:
+                    type: string
+                    example: "Compte principal"
                   balance:
                     type: number
                     example: 5000.75
@@ -59,9 +62,16 @@ paths:
 
   /transactions:
     get:
-      summary: Récupérer les transactions du mois en cours
+      summary: Récupérer les transactions du mois en cours pour un compte spécifique
       security:
         - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID unique du compte client
       responses:
         "200":
           description: Liste des transactions du mois en cours
@@ -91,49 +101,6 @@ paths:
                         balance:
                           type: number
                           example: 4950.75
-                        transactionType:
-                          type: string
-                          example: "Electronic"
-                        category:
-                          type: string
-                          example: "Food"
-                        note:
-                          type: string
-                          example: "Déjeuner avec des collègues"
-        "401":
-          description: Non autorisé
-
-    post:
-      summary: Ajouter une nouvelle transaction
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                amount:
-                  type: number
-                  example: 100.50
-                description:
-                  type: string
-                  example: "Achat en ligne"
-                transactionType:
-                  type: string
-                  example: "Electronic"
-                category:
-                  type: string
-                  example: "Shopping"
-                note:
-                  type: string
-                  example: "Achat de vêtements"
-      responses:
-        "201":
-          description: Transaction ajoutée avec succès
-        "400":
-          description: Erreur de validation
         "401":
           description: Non autorisé
 
@@ -145,7 +112,7 @@ paths:
         schema:
           type: string
         description: ID unique de la transaction
-
+        
     get:
       summary: Récupérer les détails d'une transaction
       security:
@@ -161,23 +128,13 @@ paths:
                   id:
                     type: string
                     example: "txn_001"
-                  date:
-                    type: string
-                    format: date-time
-                    example: "2025-02-01T14:30:00Z"
-                  description:
-                    type: string
-                    example: "Achat en ligne"
-                  amount:
-                    type: number
-                    example: -50.00
-                  balance:
-                    type: number
-                    example: 4950.75
                   transactionType:
                     type: string
                     example: "Electronic"
-                  category:
+                  categoryId:
+                    type: number
+                    example: 3
+                  categoryName:
                     type: string
                     example: "Food"
                   note:
@@ -189,7 +146,7 @@ paths:
           description: Transaction non trouvée
 
     patch:
-      summary: Modifier partiellement une transaction (seuls `category` et `note` peuvent être modifiés)
+      summary: Modifier partiellement une transaction (seuls `categoryId`, `categoryName` et `note` peuvent être modifiés)
       security:
         - bearerAuth: []
       requestBody:
@@ -199,7 +156,10 @@ paths:
             schema:
               type: object
               properties:
-                category:
+                categoryId:
+                  type: number
+                  example: 7
+                categoryName:
                   type: string
                   example: "Transport"
                 note:
@@ -214,30 +174,3 @@ paths:
           description: Non autorisé
         "404":
           description: Transaction non trouvée
-
-  /admin/transactions/{id}:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: ID unique de la transaction
-
-    delete:
-      summary: Supprimer une transaction (Réservé aux administrateurs)
-      security:
-        - adminAuth: []
-      responses:
-        "204":
-          description: Transaction supprimée avec succès
-        "401":
-          description: Non autorisé
-        "403":
-          description: Accès interdit (l'utilisateur n'est pas administrateur)
-        "404":
-          description: Transaction non trouvée
-
-
-
-
